@@ -8,6 +8,7 @@ add_subdirectory(ext)
 file(GLOB_RECURSE ${PROJECT_NAME}_HEADERS "include/*.hpp")
 
 add_library(${PROJECT_NAME} INTERFACE)
+target_sources(${PROJECT_NAME} INTERFACE ${${PROJECT_NAME}_HEADERS})
 target_include_directories(${PROJECT_NAME} INTERFACE include)
 
 if (${PROJECT_NAME}_ENABLE_TESTING)
