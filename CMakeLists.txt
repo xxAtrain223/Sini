@@ -12,7 +12,7 @@ file(GLOB_RECURSE ${PROJECT_NAME}_HEADERS "include/*.hpp")
 add_library(${PROJECT_NAME} INTERFACE)
 target_sources(${PROJECT_NAME} INTERFACE ${${PROJECT_NAME}_HEADERS})
 target_include_directories(${PROJECT_NAME} INTERFACE include)
-target_link_libraries(${PROJECT_NAME} INTERFACE Boost::headers)
+target_link_libraries(${PROJECT_NAME} INTERFACE Boost::boost)
 
 if (${PROJECT_NAME}_ENABLE_TESTING)
     file(GLOB_RECURSE ${PROJECT_NAME}_TEST_SOURCES "test/*.[ch]pp")
