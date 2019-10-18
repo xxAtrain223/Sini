@@ -12,6 +12,7 @@ addons:
             - cmake
             - lcov
             - cppcheck
+            - libboost-all-dev
 
 before_script:
     - ./travis/before_script.sh
