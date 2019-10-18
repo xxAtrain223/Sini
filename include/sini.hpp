@@ -13,7 +13,7 @@ namespace sini
         std::map<std::string, std::string> m_properties;
 
     public:
-        inline std::string& operator[](const std::string& propertyName)
+        std::string& operator[](const std::string& propertyName)
         {
             return m_properties.at(propertyName);
         }
@@ -36,7 +36,7 @@ namespace sini
             m_properties.emplace(propertyName, oss.str());
         }
 
-        inline std::string toString() const
+        std::string toString() const
         {
             std::string rv;
 
@@ -54,18 +54,18 @@ namespace sini
         std::map<std::string, Section> m_sections;
 
     public :
-        inline Section& operator[](const std::string& sectionName)
+        Section& operator[](const std::string& sectionName)
         {
             return m_sections.at(sectionName);
         }
 
-        inline Section& addSection(const std::string& sectionName)
+        Section& addSection(const std::string& sectionName)
         {
             m_sections.emplace(sectionName, Section());
             return m_sections.at(sectionName);
         }
 
-        inline void parse(const std::string& ini)
+        void parse(const std::string& ini)
         {
             std::regex sectionRegex(R"(^(?:\[([^\]]*)\]\r?\n)?([^\[]*))");
             std::regex propertyRegex(R"([ \t]*([a-zA-Z.$:][a-zA-Z0-9_~\-.:$ ]*?)[ \t]*=[ \t]*['"]?([^\n]+)['"]?[ \t]*(?:;[^\n]*)?[ \t]*)");
@@ -93,7 +93,7 @@ namespace sini
             }
         }
 
-        inline std::string toString() const
+        std::string toString() const
         {
             std::string rv;
 
