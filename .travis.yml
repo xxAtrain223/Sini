@@ -8,11 +8,13 @@ compiler: gcc
 
 addons:
     apt:
+        sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
         packages:
             - cmake
             - lcov
             - cppcheck
-            - libboost-all-dev
+            - libboost
 
 before_script:
     - ./travis/before_script.sh
