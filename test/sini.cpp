@@ -6,27 +6,44 @@ namespace sini
 {
     namespace test
     {
-        TEST(sini, temp)
+        TEST(sini, Idempotence)
         {
             Sini sini;
             sini.parse(
                 "a=b\n"
-                "c=d\n"
+                "c=42\n"
                 "\n"
-                "[asdf]\n"
-                "e=f\n"
-                "g=h\n"
+                "[section1]\n"
+                "e='asdf'\n"
+                "g=\"as123df\"\n"
                 "\n"
             );
             EXPECT_EQ(sini.toString(),
                 "a=b\n"
-                "c=d\n"
+                "c=42\n"
                 "\n"
-                "[asdf]\n"
-                "e=f\n"
-                "g=h\n"
+                "[section1]\n"
+                "e='asdf'\n"
+                "g=\"as123df\"\n"
                 "\n"
             );
+        }
+
+        TEST(sini, RoundTrip)
+        {
+            Sini sini;
+            sini.addSection("").set("a", 42);
+            sini[""].set("b", "asdf");
+            sini.addSection("A").set("c", 4.5);
+
+            auto str = sini.toString();
+
+            Sini sini2;
+            sini2.parse(str);
+
+            EXPECT_EQ(sini2[""].get<int>("a"), 42);
+            EXPECT_EQ(sini2[""].get<std::string>("b"), "asdf");
+            EXPECT_EQ(sini2["A"].get<double>("c"), 4.5);
         }
     }
 }
