@@ -68,11 +68,9 @@ namespace sini
         inline void parse(const std::string& ini)
         {
             std::regex sectionRegex(R"(^(?:\[([^\]]*)\]\r?\n)?([^\[]*))");
-            std::regex propertyRegex(R"(^[ \t]*([^\n]*?)[ \t]*=[ \t]*['"]?([^\n]*?)['"]?[ \t]*(?:;[^\n]*?)?[ \t]*$)");
+            std::regex propertyRegex(R"([ \t]*([a-zA-Z.$:][a-zA-Z0-9_~\-.:$ ]*?)[ \t]*=[ \t]*['"]?([^\n]+)['"]?[ \t]*(?:;[^\n]*)?[ \t]*)");
             std::smatch sectionResults;
             std::smatch propertyResults;
-
-            std::string::const_iterator ini_iter = ini.cbegin();
 
             for (std::string::const_iterator ini_iter = ini.cbegin();
                  std::regex_search(ini_iter, ini.cend(), sectionResults, sectionRegex) && ini_iter < ini.cend();
@@ -80,7 +78,7 @@ namespace sini
             {
                 std::string sectionName = sectionResults[1];
                 std::string sectionText = sectionResults[2];
-                
+
                 Section& section = addSection(sectionName);
 
                 for (std::string::const_iterator section_iter = sectionText.cbegin();

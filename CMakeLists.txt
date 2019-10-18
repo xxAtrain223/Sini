@@ -15,8 +15,8 @@ if (${PROJECT_NAME}_ENABLE_TESTING)
     file(GLOB_RECURSE ${PROJECT_NAME}_TEST_SOURCES "test/*.[ch]pp")
     
     add_executable(${PROJECT_NAME}Test ${${PROJECT_NAME}_TEST_SOURCES})
-    set_target_properties(${PROJECT_NAME}Test PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
-    target_link_libraries(${PROJECT_NAME}Test ${PROJECT_NAME} gtest gmock gtest_main)
+    set_target_properties(${PROJECT_NAME}Test PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES)
+    target_link_libraries(${PROJECT_NAME}Test ${PROJECT_NAME} gtest gtest_main)
     target_compile_options(${PROJECT_NAME}Test PRIVATE -g -O0 --coverage)
     set_target_properties(${PROJECT_NAME}Test PROPERTIES LINK_FLAGS "--coverage")
 
