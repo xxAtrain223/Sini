@@ -28,5 +28,30 @@ namespace sini
                 "\n"
             );
         }
+
+        TEST(sini, ParseError)
+        {
+            Sini sini;
+            try
+            {
+                sini.parse(
+                    "a=b\n"
+                    "\n"
+                    "[asdf\n" // intentionally forgot the closing bracket
+                    "e=f\n"
+                    "\n"
+                );
+
+                FAIL() << "Expected parsing to throw.";
+            }
+            catch (const sini::ParseError&)
+            {
+                // success!
+            }
+            catch (...)
+            {
+                FAIL() << "Expected ParseError exception type.";
+            }
+        }
     }
 }
