@@ -45,5 +45,19 @@ namespace sini
             EXPECT_EQ(sini2[""].get<std::string>("b"), "asdf");
             EXPECT_EQ(sini2["A"].get<double>("c"), 4.5);
         }
+
+        TEST(sini, ParseError)
+        {
+            Sini sini;
+            EXPECT_THROW((
+                sini.parse(
+                    "a=b\n"
+                    "\n"
+                    "[asdf\n" // intentionally forgot the closing bracket
+                    "e=f\n"
+                    "\n"
+                )),
+                sini::ParseError);
+        }
     }
 }
