@@ -6,15 +6,15 @@ namespace sini
 {
     namespace test
     {
-        TEST(sini, Idempotence)
+        TEST(sini, Normalization)
         {
             Sini sini;
             sini.parse(
-                "a=b\n"
                 "c=42\n"
+                "a=b\n"
                 "\n"
                 "[section1]\n"
-                "e='asdf'\n"
+                "e='  asdf  '\n"
                 "g=\"as123df\"\n"
                 "\n"
             );
@@ -23,8 +23,8 @@ namespace sini
                 "c=42\n"
                 "\n"
                 "[section1]\n"
-                "e='asdf'\n"
-                "g=\"as123df\"\n"
+                "e=\"  asdf  \"\n"
+                "g=as123df\n"
                 "\n"
             );
         }
@@ -58,6 +58,35 @@ namespace sini
                     "\n"
                 )),
                 sini::ParseError);
+        }
+
+        TEST(sini, SingleQuotes)
+        {
+            Sini sini;
+            sini.parse(R"(
+                foo = '  horse  '
+            )");
+
+            EXPECT_EQ(sini[""]["foo"], "  horse  ");
+        }
+
+        TEST(sini, DoubleQuotes)
+        {
+            Sini sini;
+            sini.parse(R"(
+                foo = "  horse  "
+            )");
+
+            EXPECT_EQ(sini[""]["foo"], "  horse  ");
+        }
+
+        TEST(sini, OutputQuotes)
+        {
+            Sini sini;
+
+            sini.addSection("").set("foo", "  horse  ");
+
+            EXPECT_EQ(sini.toString(), "foo=\"  horse  \"\n\n");
         }
     }
 }

@@ -68,7 +68,14 @@ namespace sini
 
             for (const auto& prop : m_properties)
             {
-                rv += prop.first + "=" + prop.second + "\n";
+                const auto& k = prop.first;
+                const auto& v = prop.second;
+                auto quote =
+                    !v.empty() && (std::isspace(v.front()) || std::isspace(v.back()))
+                        ? "\""
+                        : "";
+
+                rv += k + "=" + quote + v + quote + "\n";
             }
 
             return rv;
@@ -123,9 +130,9 @@ namespace sini
             auto wsn = ws | eol;
 
             // string enclosed in single quotes, value doesn't include the quotes
-            auto singleQuotedValue = '\'' >> *char_ > '\'';
+            auto singleQuotedValue = '\'' >> *((char_ - '\'') | "\\'") > '\'';
             // string enclosed in double quotes, value doesn't include the quotes
-            auto doubleQuotedValue = '"' >> *char_ > '"';
+            auto doubleQuotedValue = '"' >> *((char_ - '"') | "\\\"") > '"';
 
             // a chunk of text which doesn't contain whitespace
             auto textChunk = +(char_ - wsn);
@@ -133,10 +140,16 @@ namespace sini
             // a sequence of textChunks separated by whitespace
             auto rawValue = textChunk >> *(+ws >> textChunk);
 
+            // allowed first characters of property key
+            auto propLeader = char_("a-zA-Z.$:");
+
+            // other property key characters
+            auto propChars = char_("a-zA-Z0-9._~\\-$:");
+
             // property key name
             auto propKey
                 = rule<struct propKey, std::string>{"propKey"}
-                = lexeme[ char_("a-zA-Z.$:") > *char_("a-zA-Z0-9._~\\-$: ") ];
+                = lexeme[ propLeader >> *propChars >> *(+char_(" ") >> +propChars) ];
 
             // property value
             auto propValue
