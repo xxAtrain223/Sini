@@ -10,12 +10,12 @@ namespace sini
         {
             Sini sini;
             sini.parse(
-                "c=42\n"
-                "a=b\n"
+                "c=\t42\n"
+                " a = b \n"
                 "\n"
                 "[section1]\n"
-                "e='  asdf  '\n"
-                "g=\"as123df\"\n"
+                "  e='  asdf  '\n"
+                "g  =\"as123df\"\n"
                 "\n"
             );
             EXPECT_EQ(sini.toString(),
