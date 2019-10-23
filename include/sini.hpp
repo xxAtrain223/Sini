@@ -17,6 +17,12 @@ namespace sini
         using runtime_error::runtime_error;
     };
 
+    class ProxyError : public std::runtime_error
+    {
+    public:
+        using runtime_error::runtime_error;
+    };
+
     namespace _detail
     {
         namespace x3 = boost::spirit::x3;
@@ -32,34 +38,137 @@ namespace sini
                 return x3::error_handler_result::fail;
             }
         };
+
+        template <typename T>
+        std::string stringify(const T& t) {
+            std::ostringstream oss;
+            oss << t;
+            return oss.str();
+        }
+
+        std::string stringify(const std::string& t) {
+            return t;
+        }
+
+        template <typename T>
+        T destringify(const std::string& str) {
+            std::istringstream iss {str};
+            T t;
+            iss >> t;
+            return t;
+        }
+
+        template <>
+        std::string destringify<std::string>(const std::string& str) {
+            return str;
+        }
+
+        struct throw_on_construct_tag {};
     }
 
     class Section
     {
-        std::map<std::string, std::string> m_properties;
+        using PropMap = std::map<std::string, std::string>;
+
+        PropMap m_properties;
+
+        /**
+         * Base class for Proxy types, essentially ConstProxy.
+         */
+        template <typename S, typename I>
+        class ProxyBase
+        {
+            friend class Section;
+        protected:
+            S* section; // The section the proxy originated from
+            I iter; // Either an iterator to the property entry, or end(m_properties)
+            std::string key; // Name of property
+
+            // Constructs the Proxy by getting an iterator to the property for the key, if it exists.
+            ProxyBase(S& section, std::string key) :
+                section(&section),
+                iter(section.m_properties.find(key)),
+                key(std::move(key))
+            {}
+
+            // Constructs the proxy as usual, but throws a ProxyError if the property does not exist.
+            ProxyBase(S& section, std::string key, _detail::throw_on_construct_tag) :
+                ProxyBase(section, std::move(key))
+            {
+                throw_if_invalid();
+            }
+
+            // Used by methods that require the property to be valid.
+            void throw_if_invalid() const {
+                if (!valid()) {
+                    throw ProxyError("Property '" + key + "' does not exist");
+                }
+            }
+
+        public:
+            ProxyBase() = delete;
+            ProxyBase(const ProxyBase&) = default;
+            ProxyBase(ProxyBase&&) = default;
+            ProxyBase& operator=(const ProxyBase&) = default;
+            ProxyBase& operator=(ProxyBase&&) = default;
+
+            // Checks if the proxy points to a property.
+            // Note: the property could have been created after construction by another proxy.
+            bool valid() const { return iter != end(section->m_properties); }
+
+            // Explicity converts the property value to the type T.
+            template <typename T>
+            T as() const {
+                throw_if_invalid();
+                return _detail::destringify<T>(iter->second);
+            }
+
+            // Implicit conversion.
+            template <typename T>
+            operator T() const {
+                return as<T>();
+            }
+        };
+
+        // A mutable Proxy, allows assignment.
+        class Proxy : public ProxyBase<Section, PropMap::iterator>
+        {
+            using ProxyBase::ProxyBase;
+        public:
+            // Sets the value of the property.
+            template <typename T>
+            void operator=(const T& val) {
+                if (valid()) {
+                    iter->second = _detail::stringify(val);
+                } else {
+                    iter = section->m_properties.insert({key, _detail::stringify(val)}).first;
+                }
+            }
+        };
+
+        // A const Proxy, no special features, points to a const Section.
+        class ConstProxy : public ProxyBase<const Section, PropMap::const_iterator>
+        {
+            using ProxyBase::ProxyBase;
+        };
 
     public:
-        std::string& operator[](const std::string& propertyName)
+        // Returns a Proxy without checking if the property exists, similar to std::map::operator[].
+        Proxy operator[](const std::string& propertyName)
         {
-            return m_properties.at(propertyName);
+            return {*this, propertyName};
         }
 
-        template <typename T>
-        T get(const std::string& propertyName) const
+        // Returns a Proxy to a property, throws ProxyError if the property doesn't exist.
+        Proxy at(const std::string& propertyName)
         {
-            T value;
-            std::istringstream iss;
-            iss.str(m_properties.at(propertyName));
-            iss >> value;
-            return value;
+            return {*this, propertyName, _detail::throw_on_construct_tag{}};
         }
 
-        template <typename T>
-        void set(const std::string& propertyName, const T& value)
+        // Returns a ConstProxy to a property, throws ProxyError if the property doesn't exist.
+        ConstProxy at(const std::string& propertyName) const
         {
-            std::ostringstream oss;
-            oss << value;
-            m_properties.emplace(propertyName, oss.str());
+            return {*this, propertyName, _detail::throw_on_construct_tag{}};
         }
 
         std::string toString() const
@@ -86,15 +195,19 @@ namespace sini
     {
         std::map<std::string, Section> m_sections;
 
-    public :
+    public:
         Section& operator[](const std::string& sectionName)
+        {
+            return m_sections[sectionName];
+        }
+
+        Section& at(const std::string& sectionName)
         {
             return m_sections.at(sectionName);
         }
 
-        Section& addSection(const std::string& sectionName)
+        const Section& at(const std::string& sectionName) const
         {
-            m_sections.emplace(sectionName, Section());
             return m_sections.at(sectionName);
         }
 
@@ -116,13 +229,13 @@ namespace sini
             using boost::fusion::at_c;
 
             // pointer to current section (used in the setProp semantic action)
-            auto curSection = &addSection("");
+            auto curSection = &(*this)[""];
 
             // semantic action: begins a new section
-            auto startSection = [&](auto& ctx){ curSection = &addSection(_attr(ctx)); };
+            auto startSection = [&](auto& ctx){ curSection = &(*this)[_attr(ctx)]; };
 
             // semantic action: sets a property on the current section
-            auto setProp = [&](auto& ctx){ curSection->set(at_c<0>(_attr(ctx)), at_c<1>(_attr(ctx))); };
+            auto setProp = [&](auto& ctx){ (*curSection)[at_c<0>(_attr(ctx))] = at_c<1>(_attr(ctx)); };
 
             // whitepsace
             auto ws = char_(" \t");
