@@ -6,27 +6,44 @@ namespace sini
 {
     namespace test
     {
-        TEST(sini, temp)
+        TEST(sini, Normalization)
         {
             Sini sini;
             sini.parse(
-                "a=b\n"
-                "c=d\n"
+                "c=\t42\n"
+                " a = b \n"
                 "\n"
-                "[asdf]\n"
-                "e=f\n"
-                "g=h\n"
+                "[section1]\n"
+                "  e='  asdf  '\n"
+                "g  =\"as123df\"\n"
                 "\n"
             );
             EXPECT_EQ(sini.toString(),
                 "a=b\n"
-                "c=d\n"
+                "c=42\n"
                 "\n"
-                "[asdf]\n"
-                "e=f\n"
-                "g=h\n"
+                "[section1]\n"
+                "e=\"  asdf  \"\n"
+                "g=as123df\n"
                 "\n"
             );
+        }
+
+        TEST(sini, RoundTrip)
+        {
+            Sini sini;
+            sini[""]["a"] = 42;
+            sini[""]["b"] = "asdf";
+            sini["A"]["c"] = 4.5;
+
+            auto str = sini.toString();
+
+            Sini sini2;
+            sini2.parse(str);
+
+            EXPECT_EQ(sini2[""]["a"].as<int>(), 42);
+            EXPECT_EQ(sini2[""]["b"].as<std::string>(), "asdf");
+            EXPECT_EQ(sini2["A"]["c"].as<double>(), 4.5);
         }
 
         TEST(sini, ParseError)
@@ -41,6 +58,35 @@ namespace sini
                     "\n"
                 )),
                 sini::ParseError);
+        }
+
+        TEST(sini, SingleQuotes)
+        {
+            Sini sini;
+            sini.parse(R"(
+                foo = '  horse  '
+            )");
+
+            EXPECT_EQ(sini[""]["foo"].as<std::string>(), "  horse  ");
+        }
+
+        TEST(sini, DoubleQuotes)
+        {
+            Sini sini;
+            sini.parse(R"(
+                foo = "  horse  "
+            )");
+
+            EXPECT_EQ(sini[""]["foo"].as<std::string>(), "  horse  ");
+        }
+
+        TEST(sini, OutputQuotes)
+        {
+            Sini sini;
+
+            sini[""]["foo"] = "  horse  ";
+
+            EXPECT_EQ(sini.toString(), "foo=\"  horse  \"\n\n");
         }
 
         TEST(sini, AtSectionError)
