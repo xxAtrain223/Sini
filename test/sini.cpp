@@ -32,18 +32,18 @@ namespace sini
         TEST(sini, RoundTrip)
         {
             Sini sini;
-            sini.addSection("").set("a", 42);
-            sini[""].set("b", "asdf");
-            sini.addSection("A").set("c", 4.5);
+            sini[""]["a"] = 42;
+            sini[""]["b"] = "asdf";
+            sini["A"]["c"] = 4.5;
 
             auto str = sini.toString();
 
             Sini sini2;
             sini2.parse(str);
 
-            EXPECT_EQ(sini2[""].get<int>("a"), 42);
-            EXPECT_EQ(sini2[""].get<std::string>("b"), "asdf");
-            EXPECT_EQ(sini2["A"].get<double>("c"), 4.5);
+            EXPECT_EQ(sini2[""]["a"].as<int>(), 42);
+            EXPECT_EQ(sini2[""]["b"].as<std::string>(), "asdf");
+            EXPECT_EQ(sini2["A"]["c"].as<double>(), 4.5);
         }
 
         TEST(sini, ParseError)
@@ -67,7 +67,7 @@ namespace sini
                 foo = '  horse  '
             )");
 
-            EXPECT_EQ(sini[""]["foo"], "  horse  ");
+            EXPECT_EQ(sini[""]["foo"].as<std::string>(), "  horse  ");
         }
 
         TEST(sini, DoubleQuotes)
@@ -77,14 +77,14 @@ namespace sini
                 foo = "  horse  "
             )");
 
-            EXPECT_EQ(sini[""]["foo"], "  horse  ");
+            EXPECT_EQ(sini[""]["foo"].as<std::string>(), "  horse  ");
         }
 
         TEST(sini, OutputQuotes)
         {
             Sini sini;
 
-            sini.addSection("").set("foo", "  horse  ");
+            sini[""]["foo"] = "  horse  ";
 
             EXPECT_EQ(sini.toString(), "foo=\"  horse  \"\n\n");
         }

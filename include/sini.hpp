@@ -78,7 +78,6 @@ namespace sini
         template <typename S, typename I>
         class ProxyBase
         {
-            friend class Section;
         protected:
             S* section; // The section the proxy originated from
             I iter; // Either an iterator to the property entry, or end(m_properties)
@@ -133,6 +132,7 @@ namespace sini
         // A mutable Proxy, allows assignment.
         class Proxy : public ProxyBase<Section, PropMap::iterator>
         {
+            friend class Section;
             using ProxyBase::ProxyBase;
         public:
             // Sets the value of the property.
@@ -149,6 +149,7 @@ namespace sini
         // A const Proxy, no special features, points to a const Section.
         class ConstProxy : public ProxyBase<const Section, PropMap::const_iterator>
         {
+            friend class Section;
             using ProxyBase::ProxyBase;
         };
 
