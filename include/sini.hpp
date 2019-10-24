@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <regex>
 
 namespace sini
 {
@@ -61,6 +62,54 @@ namespace sini
         template <>
         std::string destringify<std::string>(const std::string& str) {
             return str;
+        }
+
+        template <>
+        bool destringify<bool>(const std::string& str) {
+            static std::regex reFalse("^(?:0|f|n|off|no|false)$", std::regex_constants::icase);
+            static std::regex reTrue("^(?:1|t|y|on|yes|true)$", std::regex_constants::icase);
+
+            if (std::regex_match(str, reFalse))
+            {
+                return false;
+            }
+            else if (std::regex_match(str, reTrue))
+            {
+                return true;
+            }
+            else
+            {
+                throw ParseError("Could not parse \"" + str + "\" as a bool");
+            }
+        }
+
+        template <>
+        int destringify<int>(const std::string& str) {
+            static std::regex reHex("^0x.+", std::regex_constants::icase);
+            static std::regex reBin("^0b.+", std::regex_constants::icase);
+            static std::regex reOct("^0.+", std::regex_constants::icase);
+
+            std::istringstream iss{ str };
+            int t;
+
+            if (std::regex_match(str, reHex))
+            {
+                iss >> std::hex >> t;
+            }
+            else if (std::regex_match(str, reBin))
+            {
+                return std::bitset<sizeof(int) * 8>(str, 2).to_ulong();
+            }
+            else if (std::regex_match(str, reOct))
+            {
+                iss >> std::oct >> t;
+            }
+            else
+            {
+                iss >> t;
+            }
+
+            return t;
         }
 
         struct throw_on_construct_tag {};
