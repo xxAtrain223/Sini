@@ -51,9 +51,9 @@ namespace sini
             return t;
         }
 
-        template <typename T>
+        template <typename T, typename std::enable_if<!std::is_integral<T>::value, int>::type * = nullptr>
         T destringify(const std::string& str) {
-            std::istringstream iss {str};
+            std::istringstream iss{ str };
             T t;
             iss >> t;
             return t;
@@ -64,8 +64,8 @@ namespace sini
             return str;
         }
 
-        template <>
-        bool destringify<bool>(const std::string& str) {
+        template <typename T, typename std::enable_if<std::is_same<bool, T>::value, int>::type * = nullptr>
+        T destringify(const std::string& str) {
             static std::regex reFalse("^(?:0|f|n|off|no|false)$", std::regex_constants::icase);
             static std::regex reTrue("^(?:1|t|y|on|yes|true)$", std::regex_constants::icase);
 
@@ -83,8 +83,8 @@ namespace sini
             }
         }
 
-        template <>
-        int destringify<int>(const std::string& str) {
+        template <typename T, typename std::enable_if<std::is_integral<T>::value && !std::is_same<bool, T>::value, int>::type * = nullptr>
+        T destringify(const std::string& str) {
             static std::regex reHex("^0x.+", std::regex_constants::icase);
             static std::regex reBin("^0b.+", std::regex_constants::icase);
             static std::regex reOct("^0.+", std::regex_constants::icase);
