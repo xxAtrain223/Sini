@@ -93,7 +93,7 @@ namespace sini
         };
 
         template <typename T>
-        struct parse_traits<T, std::enable_if_t<std::is_integral_v<T>>> {
+        struct parse_traits<T, std::enable_if_t<std::is_integral<T>::value>> {
             static T parse(const std::string& str)
             {
                 static std::regex reHex("^0x.+", std::regex_constants::icase);
