@@ -41,75 +41,92 @@ namespace sini
         };
 
         template <typename T>
-        std::string stringify(const T& t) {
+        std::string toString(const T& t) {
             std::ostringstream oss;
             oss << t;
             return oss.str();
         }
 
-        std::string stringify(const std::string& t) {
+        std::string toString(const std::string& t) {
             return t;
         }
 
-        template <typename T, typename std::enable_if<!std::is_integral<T>::value, int>::type * = nullptr>
-        T destringify(const std::string& str) {
-            std::istringstream iss{ str };
-            T t;
-            iss >> t;
-            return t;
-        }
+        template <typename T, typename = void>
+        struct parse_traits {
+            static T parse(const std::string& str)
+            {
+                std::istringstream iss{ str };
+                T t;
+                iss >> t;
+                return t;
+            }
+        };
 
         template <>
-        std::string destringify<std::string>(const std::string& str) {
-            return str;
-        }
+        struct parse_traits<std::string> {
+            static std::string parse(const std::string& str)
+            {
+                return str;
+            }
+        };
 
-        template <typename T, typename std::enable_if<std::is_same<bool, T>::value, int>::type * = nullptr>
-        T destringify(const std::string& str) {
-            static std::regex reFalse("^(?:0|f|n|off|no|false)$", std::regex_constants::icase);
-            static std::regex reTrue("^(?:1|t|y|on|yes|true)$", std::regex_constants::icase);
+        template <>
+        struct parse_traits<bool> {
+            static bool parse(const std::string& str)
+            {
+                static std::regex reFalse("^(?:0|f|n|off|no|false)$", std::regex_constants::icase);
+                static std::regex reTrue("^(?:1|t|y|on|yes|true)$", std::regex_constants::icase);
 
-            if (std::regex_match(str, reFalse))
-            {
-                return false;
+                if (std::regex_match(str, reFalse))
+                {
+                    return false;
+                }
+                else if (std::regex_match(str, reTrue))
+                {
+                    return true;
+                }
+                else
+                {
+                    throw ParseError("Could not parse \"" + str + "\" as a bool");
+                }
             }
-            else if (std::regex_match(str, reTrue))
-            {
-                return true;
-            }
-            else
-            {
-                throw ParseError("Could not parse \"" + str + "\" as a bool");
-            }
-        }
+        };
 
-        template <typename T, typename std::enable_if<std::is_integral<T>::value && !std::is_same<bool, T>::value, int>::type * = nullptr>
-        T destringify(const std::string& str) {
-            static std::regex reHex("^0x.+", std::regex_constants::icase);
-            static std::regex reBin("^0b.+", std::regex_constants::icase);
-            static std::regex reOct("^0.+", std::regex_constants::icase);
+        template <typename T>
+        struct parse_traits<T, std::enable_if_t<std::is_integral_v<T>>> {
+            static T parse(const std::string& str)
+            {
+                static std::regex reHex("^0x.+", std::regex_constants::icase);
+                static std::regex reBin("^0b.+", std::regex_constants::icase);
+                static std::regex reOct("^0.+", std::regex_constants::icase);
 
-            std::istringstream iss{ str };
-            int t;
+                std::istringstream iss{ str };
+                int t;
 
-            if (std::regex_match(str, reHex))
-            {
-                iss >> std::hex >> t;
-            }
-            else if (std::regex_match(str, reBin))
-            {
-                return std::bitset<sizeof(int) * 8>(str, 2).to_ulong();
-            }
-            else if (std::regex_match(str, reOct))
-            {
-                iss >> std::oct >> t;
-            }
-            else
-            {
-                iss >> t;
-            }
+                if (std::regex_match(str, reHex))
+                {
+                    iss >> std::hex >> t;
+                }
+                else if (std::regex_match(str, reBin))
+                {
+                    return std::bitset<sizeof(int) * 8>(str, 2).to_ulong();
+                }
+                else if (std::regex_match(str, reOct))
+                {
+                    iss >> std::oct >> t;
+                }
+                else
+                {
+                    iss >> t;
+                }
 
-            return t;
+                return t;
+            }
+        };
+
+        template <typename T>
+        T parse(const std::string& str) {
+            return parse_traits<T>::parse(str);
         }
 
         struct throw_on_construct_tag {};
@@ -168,7 +185,7 @@ namespace sini
             template <typename T>
             T as() const {
                 throw_if_invalid();
-                return _detail::destringify<T>(iter->second);
+                return _detail::parse<T>(iter->second);
             }
 
             // Implicit conversion.
@@ -188,9 +205,9 @@ namespace sini
             template <typename T>
             void operator=(const T& val) {
                 if (valid()) {
-                    iter->second = _detail::stringify(val);
+                    iter->second = _detail::toString(val);
                 } else {
-                    iter = section->m_properties.insert({key, _detail::stringify(val)}).first;
+                    iter = section->m_properties.insert({key, _detail::toString(val)}).first;
                 }
             }
         };
