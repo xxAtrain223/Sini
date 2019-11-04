@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(sini LANGUAGES CXX)
 
-option(${PROJECT_NAME}_ENABLE_TESTING "Enable Testing for ${PROJECT_NAME}" ON)
+option(${PROJECT_NAME}_ENABLE_TESTING "Enable Testing for ${PROJECT_NAME}" OFF)
 
 add_subdirectory(ext)
 
