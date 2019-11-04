@@ -96,7 +96,7 @@ namespace sini
             EXPECT_THROW(sini.at(""), std::out_of_range);
         }
 
-        TEST(sini, ProxyAssignment)
+        TEST(sini_proxy, ProxyAssignment)
         {
             Sini sini;
             sini[""]["test"] = 42;
@@ -104,7 +104,7 @@ namespace sini
             EXPECT_EQ(sini[""]["test"].as<std::string>(), "42");
         }
 
-        TEST(sini, ProxyReassignment)
+        TEST(sini_proxy, ProxyReassignment)
         {
             Sini sini;
 
@@ -115,7 +115,7 @@ namespace sini
             EXPECT_EQ(sini[""]["test"].as<std::string>(), "99");
         }
 
-        TEST(sini, ProxyConversions)
+        TEST(sini_proxy, ProxyConversions)
         {
             Sini sini;
             sini[""]["test"] = 42;
@@ -125,7 +125,7 @@ namespace sini
             EXPECT_EQ(sini[""]["test"].as<double>(), 42.0);
         }
 
-        TEST(sini, ConversionProxyError)
+        TEST(sini_proxy, ConversionProxyError)
         {
             Sini sini;
 
@@ -134,7 +134,7 @@ namespace sini
             EXPECT_THROW(((int)proxy), sini::ProxyError);
         }
 
-        TEST(sini, ExplicitConversionProxyError)
+        TEST(sini_proxy, ExplicitConversionProxyError)
         {
             Sini sini;
 
@@ -143,7 +143,7 @@ namespace sini
             EXPECT_THROW(proxy.as<int>(), sini::ProxyError);
         }
 
-        TEST(sini, AtProxy)
+        TEST(sini_proxy, AtProxy)
         {
             Sini sini;
 
@@ -153,7 +153,7 @@ namespace sini
             EXPECT_EQ(section.at("test").as<std::string>(), "42");
         }
 
-        TEST(sini, AtProxyError)
+        TEST(sini_proxy, AtProxyError)
         {
             Sini sini;
 
@@ -162,7 +162,7 @@ namespace sini
             EXPECT_THROW(section.at("test"), sini::ProxyError);
         }
 
-        TEST(sini, ConstAtProxy)
+        TEST(sini_proxy, ConstAtProxy)
         {
             Sini sini;
 
@@ -174,13 +174,84 @@ namespace sini
             EXPECT_EQ(const_section.at("test").as<std::string>(), "42");
         }
 
-        TEST(sini, ConstAtProxyError)
+        TEST(sini_proxy, ConstAtProxyError)
         {
             Sini sini;
 
             const auto& section = sini[""];
 
             EXPECT_THROW(section.at("test"), sini::ProxyError);
+        }
+
+        TEST(sini_parse, Int)
+        {
+            Sini sini;
+
+            EXPECT_NO_THROW(sini.parse(
+                "int=493\n"
+                "hex=0x01ED\n"
+                "oct=0755\n"
+                "bin=0b0000000111101101\n"
+                "neg=-493\n"
+            ));
+
+            EXPECT_EQ(sini[""]["int"].as<int>(), 493);
+            EXPECT_EQ(sini[""]["hex"].as<int>(), 0x01ED);
+            EXPECT_EQ(sini[""]["oct"].as<int>(), 0755);
+            EXPECT_EQ(sini[""]["bin"].as<int>(), 0b0000000111101101);
+            EXPECT_EQ(sini[""]["neg"].as<int>(), -493);
+        }
+
+        TEST(sini_parse, FloatingPoint)
+        {
+            Sini sini;
+
+            EXPECT_NO_THROW(sini.parse(
+                "float=1.f\n"
+                "double=2.0\n"
+                "Scientific Notation 1 =+26.84365E+13\n"
+                "Scientific Notation 2=   324.90154e8\n"
+                "Scientific Notation 3 = -91.66217E-9 \n"
+            ));
+
+            EXPECT_FLOAT_EQ(sini[""]["float"].as<float>(), 1.f);
+            EXPECT_DOUBLE_EQ(sini[""]["double"].as<double>(), 2.0);
+            EXPECT_DOUBLE_EQ(sini[""]["Scientific Notation 1"].as<double>(), +26.84365E+13);
+            EXPECT_DOUBLE_EQ(sini[""]["Scientific Notation 2"].as<double>(), 324.90154e8);
+            EXPECT_DOUBLE_EQ(sini[""]["Scientific Notation 3"].as<double>(), -91.66217E-9);
+        }
+
+        TEST(sini_parse, Boolean)
+        {
+            Sini sini;
+
+            EXPECT_NO_THROW(sini.parse(
+                "zero=0\n"
+                "f=f\n"
+                "n=n\n"
+                "off=off\n"
+                "no=no\n"
+                "false=false\n"
+                "one=1\n"
+                "t=t\n"
+                "y=y\n"
+                "on=on\n"
+                "yes=yes\n"
+                "true=true\n"
+            ));
+
+            EXPECT_EQ(sini[""]["zero"].as<bool>(), false);
+            EXPECT_EQ(sini[""]["f"].as<bool>(), false);
+            EXPECT_EQ(sini[""]["n"].as<bool>(), false);
+            EXPECT_EQ(sini[""]["off"].as<bool>(), false);
+            EXPECT_EQ(sini[""]["no"].as<bool>(), false);
+            EXPECT_EQ(sini[""]["false"].as<bool>(), false);
+            EXPECT_EQ(sini[""]["one"].as<bool>(), true);
+            EXPECT_EQ(sini[""]["t"].as<bool>(), true);
+            EXPECT_EQ(sini[""]["y"].as<bool>(), true);
+            EXPECT_EQ(sini[""]["on"].as<bool>(), true);
+            EXPECT_EQ(sini[""]["yes"].as<bool>(), true);
+            EXPECT_EQ(sini[""]["true"].as<bool>(), true);
         }
     }
 }
