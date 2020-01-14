@@ -5,14 +5,14 @@ option(${PROJECT_NAME}_ENABLE_TESTING "Enable Testing for ${PROJECT_NAME}" OFF)
 
 add_subdirectory(ext)
 
-find_package(Boost 1.67 REQUIRED)
+#find_package(Boost 1.67 REQUIRED)
 
 file(GLOB_RECURSE ${PROJECT_NAME}_HEADERS "include/*.hpp")
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_sources(${PROJECT_NAME} INTERFACE ${${PROJECT_NAME}_HEADERS})
-target_include_directories(${PROJECT_NAME} INTERFACE include)
-target_link_libraries(${PROJECT_NAME} INTERFACE Boost::boost)
+target_include_directories(${PROJECT_NAME} INTERFACE include ext/spirit/include)
+#target_link_libraries(${PROJECT_NAME} INTERFACE Boost::boost)
 
 if (${PROJECT_NAME}_ENABLE_TESTING)
     file(GLOB_RECURSE ${PROJECT_NAME}_TEST_SOURCES "test/*.[ch]pp")
